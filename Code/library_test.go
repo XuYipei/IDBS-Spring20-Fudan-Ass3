@@ -7,50 +7,55 @@ import (
 func TestCreateTables(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
+	lib.DeleteAll()
 	err := lib.CreateTables()
 	if err != nil {
 		t.Errorf("can't create tables")
 	}
 }
+
 func TestAddBook(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	lib.AddBook("Orz Lzh", "Lzh", "0")
-	lib.AddBook("Orz Lzh", "Lzh", "1")
-	lib.AddBook("Orz Lzh", "Lzh", "2")
-	lib.AddBook("Orz Lzh", "Lzh", "3")
-	lib.AddBook("Orz Lzh", "Lzh", "4")
+	lib.AddBook("Orz Lzh", "Lzh", "0") //1
+	lib.AddBook("Orz Lzh", "Lzh", "0") //2
+	lib.AddBook("Orz Lzh", "Lzh", "0") //3
+	lib.AddBook("Orz Lzh", "Lzh", "1") //4
+	lib.AddBook("Orz Lzh", "Lzh", "1") //5
 
-	lib.AddBook("Orz Lzh Tql", "Lin", "5")
-	lib.AddBook("Orz Lzh Tql", "Lin", "6")
-	lib.AddBook("Orz Lzh Tql", "Lin", "7")
-	lib.AddBook("Orz Lzh Tql", "Lin", "8")
+	lib.AddBook("Orz Lzh Tql", "Lin", "2") //6
+	lib.AddBook("Orz Lzh Tql", "Lin", "3") //7
+	lib.AddBook("Orz Lzh Tql", "Lin", "3") //8
+	lib.AddBook("Orz Lzh Tql", "Lin", "3") //9
 
-	lib.AddBook("Lzh Tql", "L", "9")
-	lib.AddBook("Lzh Tql", "L", "10")
-	lib.AddBook("Lzh Tql", "L", "11")
-	lib.AddBook("Lzh Tql", "L", "12")
-	lib.AddBook("Lzh Tql", "L", "13")
+	lib.AddBook("Lzh Tql", "L", "4") //10
+	lib.AddBook("Lzh Tql", "L", "4") //11
+	lib.AddBook("Lzh Tql", "L", "5") //12
+	lib.AddBook("Lzh Tql", "L", "6") //13
+	lib.AddBook("Lzh Tql", "L", "7") //14
 }
 
 func TestRemoveBook(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	lib.RemoveBook("13")
+	lib.RemoveBook(13, "Fire")
 }
 
 func TestAddAccount(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	lib.AddAccount("Lzh")
-	lib.AddAccount("XAs")
-	lib.AddAccount("Pry")
-	lib.AddAccount("Hld")
-	lib.AddAccount("Swt")
-	lib.AddAccount("Wb")
+	lib.AddAccount("Lzh", "1") //1
+	lib.AddAccount("XAs", "1") //2
+	lib.AddAccount("Pry", "1") //3
+	lib.AddAccount("Hld", "1") //4
+	lib.AddAccount("Swt", "1") //5
+	lib.AddAccount("Wb", "1")  //6
 }
 
-func CheckBook(ans, res []struct{ title, author, ISBN string }) bool {
+func CheckBook(ans, res []struct {
+	book_id             int
+	title, author, ISBN string
+}) bool {
 	if len(ans) != len(res) {
 		return (false)
 	}
@@ -68,52 +73,30 @@ func CheckBook(ans, res []struct{ title, author, ISBN string }) bool {
 	return (true)
 }
 
-func TestFindBookISBN(t *testing.T) {
+func TestFindBook(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	ans := []struct{ title, author, ISBN string }{
-		{"Orz Lzh", "Lzh", "1"},
+	ans0 := []struct {
+		book_id             int
+		title, author, ISBN string
+	}{
+		{1, "Orz Lzh", "Lzh", "0"},
+		{2, "Orz Lzh", "Lzh", "0"},
+		{3, "Orz Lzh", "Lzh", "0"},
 	}
-	res, err := lib.FindBookISBN("1")
-	if err != nil {
-		t.Errorf("Runtime Error")
-	}
-	if !CheckBook(ans, res) {
-		t.Errorf("WrongAnswer")
-	}
-}
+	ans1 := []struct {
+		book_id             int
+		title, author, ISBN string
+	}{}
 
-func TestFindBooktitle(t *testing.T) {
-	lib := Library{}
-	lib.ConnectDB()
-	ans := []struct{ title, author, ISBN string }{
-		{"Orz Lzh Tql", "Lin", "5"},
-		{"Orz Lzh Tql", "Lin", "6"},
-		{"Orz Lzh Tql", "Lin", "7"},
-		{"Orz Lzh Tql", "Lin", "8"},
-	}
-	res, err := lib.FindBookTitle("Orz Lzh Tql")
+	ret, nor, err := lib.FindBook("Orz Lzh", "Lzh", "0")
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	if !CheckBook(ans, res) {
+	if !CheckBook(ret, ans0) {
 		t.Errorf("WrongAnswer")
 	}
-}
-func TestFindBookAuthor(t *testing.T) {
-	lib := Library{}
-	lib.ConnectDB()
-	ans := []struct{ title, author, ISBN string }{
-		{"Lzh Tql", "L", "9"},
-		{"Lzh Tql", "L", "10"},
-		{"Lzh Tql", "L", "11"},
-		{"Lzh Tql", "L", "12"},
-	}
-	res, err := lib.FindBookAuthor("L")
-	if err != nil {
-		t.Errorf("Runtime Error")
-	}
-	if !CheckBook(ans, res) {
+	if !CheckBook(nor, ans1) {
 		t.Errorf("WrongAnswer")
 	}
 }
@@ -121,15 +104,15 @@ func TestFindBookAuthor(t *testing.T) {
 func TestBorrowBook(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	err := lib.BorrowBook("0", "XAs", "2020-5-5", "2020-5-2")
+	err := lib.BorrowBook(1, 3, "2020-5-5")
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	err = lib.BorrowBook("1", "XAs", "2020-5-6", "2020-5-2")
+	err = lib.BorrowBook(2, 3, "2020-5-6")
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	err = lib.BorrowBook("2", "XAs", "2020-5-7", "2020-5-2")
+	err = lib.BorrowBook(3, 3, "2020-5-9")
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
@@ -156,12 +139,19 @@ func CheckStr(ans, res []string) bool {
 func TestBookNotReturned(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	res, err := lib.QueryBookNotReturned("XAs")
+	res, err := lib.QueryBookNotReturned(3)
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	ans := []string{"0", "1", "2"}
-	if !CheckStr(ans, res) {
+	ans := []struct {
+		book_id             int
+		title, author, ISBN string
+	}{
+		{1, "Orz Lzh", "Lzh", "0"},
+		{2, "Orz Lzh", "Lzh", "0"},
+		{3, "Orz Lzh", "Lzh", "0"},
+	}
+	if !CheckBook(ans, res) {
 		t.Errorf("Wrong Answer")
 	}
 }
@@ -169,19 +159,19 @@ func TestBookNotReturned(t *testing.T) {
 func TestModifyDeadline(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	err := lib.ExtendDeadline("0", "2020-5-6")
+	err := lib.ExtendDeadline(1, "2020-5-6")
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	err = lib.ExtendDeadline("0", "2020-5-6")
+	err = lib.ExtendDeadline(1, "2020-5-6")
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	err = lib.ExtendDeadline("0", "2020-5-6")
+	err = lib.ExtendDeadline(1, "2020-5-6")
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	err = lib.ExtendDeadline("0", "2020-5-7")
+	err = lib.ExtendDeadline(1, "2020-5-7")
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
@@ -190,7 +180,7 @@ func TestModifyDeadline(t *testing.T) {
 func TestQueryDeadline(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	res, err := lib.QueryDeadline("0")
+	res, err := lib.QueryDeadline(1)
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
@@ -203,7 +193,7 @@ func TestQueryDeadline(t *testing.T) {
 func TestReturnBook(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	err := lib.ReturnBook("XAs", "0")
+	err := lib.ReturnBook(3)
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
@@ -212,25 +202,86 @@ func TestReturnBook(t *testing.T) {
 func TestQueryOverdue(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	res, err := lib.QueryOverdue("XAs", "2020-5-5")
+	res, err := lib.QueryOverdue(3)
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	ans := []string{"1", "2"}
-	if !CheckStr(ans, res) {
+	ans := []struct {
+		book_id             int
+		title, author, ISBN string
+	}{
+		{1, "Orz Lzh", "Lzh", "0"},
+		{2, "Orz Lzh", "Lzh", "0"},
+	}
+	if !CheckBook(ans, res) {
 		t.Errorf("Wrong Answer")
 	}
+}
+
+func CheckBorrow(ans, res []struct {
+	book_id int
+	ISBN    string
+}) bool {
+	if len(ans) != len(res) {
+		return (false)
+	}
+	for i := 0; i < len(ans); i++ {
+		find := 0
+		for j := 0; j < len(res); j++ {
+			if ans[i] == res[j] {
+				find = 1
+			}
+		}
+		if find == 0 {
+			return (false)
+		}
+	}
+	return (true)
 }
 
 func TestBorrorwHistory(t *testing.T) {
 	lib := Library{}
 	lib.ConnectDB()
-	res, err := lib.QueryHistory("XAs")
+	res, err := lib.QueryHistory(3)
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
-	ans := []string{"0", "1", "2"}
-	if !CheckStr(ans, res) {
+	ans := []struct {
+		book_id int
+		ISBN    string
+	}{
+		{3, "0"},
+	}
+	if !CheckBorrow(ans, res) {
+		t.Errorf("Wrong Answer")
+	}
+}
+
+func TestBorrowAgain(t *testing.T) {
+	lib := Library{}
+	lib.ConnectDB()
+	err := lib.BorrowBook(5, 3, "2020-5-5")
+	if err != nil {
+		t.Errorf("Runtime Error")
+	}
+	err = lib.BorrowBook(6, 3, "2020-5-6")
+	if err != nil {
+		t.Errorf("Runtime Error")
+	}
+	nor, er := lib.QueryBookNotReturned(3)
+	if er != nil {
+		t.Errorf("Runtime Error")
+	}
+	ans := []struct {
+		book_id             int
+		title, author, ISBN string
+	}{
+		{1, "Orz Lzh", "Lzh", "0"},
+		{2, "Orz Lzh", "Lzh", "0"},
+		{5, "Orz Lzh", "Lzh", "1"},
+		{6, "Orz Lzh Tql", "Lin", "2"},
+	}
+	if !CheckBook(ans, nor) {
 		t.Errorf("Wrong Answer")
 	}
 }
