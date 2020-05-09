@@ -80,4 +80,8 @@
 - CreateTables
 
   创建所需的表
+  
+- Exit
+
+  退出数据库
 
