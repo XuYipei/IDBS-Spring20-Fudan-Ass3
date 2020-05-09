@@ -92,6 +92,11 @@
 
 ​	文件为library_test.go，使用命令go test -v进行测试
 
+## 设计思路
+
+​	由于借阅关系为一对多关系，在平时更多地会对在架图书进行操作，故创建模式books_borrow和在架图书books_avail分开  
+​	由于可能出现一种书有多本地情况，故创建book_id唯一标识书本，为了方便添加书本的同时不必为了保证book_id不重复，直接自动创建book_id
+
 ## 项目链接
 
 ​	https://github.com/XuYipei/IDBS-Spring20-Fudan-Ass3

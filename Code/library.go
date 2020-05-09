@@ -82,20 +82,34 @@ func Execute(db *sqlx.DB, op []string) error {
 
 // CreateTables created the tables in MySQL
 func (lib *Library) CreateTables() error {
+	s := fmt.Sprintf("CREATE TABLE counts(book_tot INT, student_tot INT)")
 	s0 := fmt.Sprintf("CREATE TABLE books_avail(book_id INT, title CHAR(32), author CHAR(32), ISBN CHAR(32), PRIMARY KEY(book_id))")
 	s1 := fmt.Sprintf("CREATE TABLE students(student_id INT, name CHAR(32), password CHAR(32), PRIMARY KEY(student_id))")
 	s2 := fmt.Sprintf("CREATE TABLE books_borrow(book_id INT, title CHAR(32), author CHAR(32), ISBN CHAR(32), student_id INT, deadline DATE, extend_times INT(4), PRIMARY KEY (book_id), FOREIGN KEY (student_id) REFERENCES students(student_id))")
 	s3 := fmt.Sprintf("CREATE TABLE borrow_logs(book_id INT, student_id INT, ISBN CHAR(32), FOREIGN KEY (student_id) REFERENCES students(student_id))")
 	s4 := fmt.Sprintf("CREATE TABLE remove_logs(book_id INT, ISBN CHAR(32), detail CHAR(64), PRIMARY KEY(book_id))")
-	err := Execute(lib.db, []string{s0, s1, s2, s3, s4})
+	s5 := fmt.Sprintf("INSERT INTO counts(book_tot, student_tot) VALUES (0, 0)")
+	err := Execute(lib.db, []string{s, s0, s1, s2, s3, s4, s5})
 	return err
 }
 
 // AddBook add a book into the library
 func (lib *Library) AddBook(title, author, ISBN string) (int, error) {
+	s := fmt.Sprintf("SELECT book_tot FROM counts")
+	rows, err := lib.db.Query(s)
+	if err != nil {
+		fmt.Println(s)
+		panic(err)
+	}
+	for rows.Next() {
+		rows.Scan(&lib.book_tot)
+	}
+	rows.Close()
+
 	lib.book_tot = lib.book_tot + 1
-	s := fmt.Sprintf("INSERT INTO books_avail(book_id, title, author, ISBN) VALUES (%d, '%s', '%s', '%s')", lib.book_tot, title, author, ISBN)
-	err := Execute(lib.db, []string{s})
+	s = fmt.Sprintf("INSERT INTO books_avail(book_id, title, author, ISBN) VALUES (%d, '%s', '%s', '%s')", lib.book_tot, title, author, ISBN)
+	s1 := fmt.Sprintf("UPDATE counts SET book_tot = %d", lib.book_tot)
+	err = Execute(lib.db, []string{s, s1})
 	return lib.book_tot, err
 }
 
@@ -111,14 +125,25 @@ func (lib *Library) RemoveBook(book_id int, detail string) error {
 
 // Add a student account into the library
 func (lib *Library) AddAccount(name, password string) (int, error) {
+	s := fmt.Sprintf("SELECT student_tot FROM counts")
+	rows, err := lib.db.Query(s)
+	if err != nil {
+		fmt.Println(s)
+		panic(err)
+	}
+	for rows.Next() {
+		rows.Scan(&lib.student_tot)
+	}
+	rows.Close()
 	lib.student_tot = lib.student_tot + 1
-	s := fmt.Sprintf("INSERT INTO students(student_id, name, password) VALUES (%d, '%s', '%s')", lib.student_tot, name, password)
-	err := Execute(lib.db, []string{s})
+	s = fmt.Sprintf("INSERT INTO students(student_id, name, password) VALUES (%d, '%s', '%s')", lib.student_tot, name, password)
+	s1 := fmt.Sprintf("UPDATE counts SET student_tot = %d", lib.student_tot)
+	err = Execute(lib.db, []string{s, s1})
 	return lib.student_tot, err
 }
 
 //Find a book given ISBN in the library
-func (lib *Library) FindBook(title, author, ISBN string) ([]struct {
+func (lib *Library) FindBook(title, author, ISBN string, mod int) ([]struct {
 	book_id             int
 	title, author, ISBN string
 }, []struct {
@@ -126,8 +151,38 @@ func (lib *Library) FindBook(title, author, ISBN string) ([]struct {
 	title, author, ISBN string
 }, error) {
 	var s0, s1 string
-	s0 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_avail WHERE title = '%s' and author = '%s' and ISBN = '%s'", title, author, ISBN)
-	s1 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_borrow WHERE title = '%s' and author = '%s' and ISBN = '%s'", title, author, ISBN)
+	switch mod {
+	case 0:
+		if title != "" {
+			s0 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_avail WHERE title = '%s'", title)
+			s1 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_borrow WHERE title = '%s'", title)
+		}
+		if author != "" {
+			s0 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_avail WHERE author = '%s'", author)
+			s1 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_borrow WHERE author = '%s'", author)
+		}
+		if ISBN != "" {
+			s0 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_avail WHERE ISBN = '%s'", ISBN)
+			s1 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_borrow WHERE ISBN = '%s'", ISBN)
+		}
+	case 1:
+		if title == "" {
+			s0 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_avail WHERE author = '%s' and ISBN = '%s'", author, ISBN)
+			s1 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_borrow WHERE author = '%s' and ISBN = '%s'", author, ISBN)
+		}
+		if author == "" {
+			s0 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_avail WHERE title = '%s' and ISBN = '%s'", title, ISBN)
+			s1 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_borrow WHERE title = '%s' and ISBN = '%s'", title, ISBN)
+		}
+		if ISBN == "" {
+			s0 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_avail WHERE author = '%s' and title = '%s'", author, title)
+			s1 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_borrow WHERE author = '%s' and title = '%s'", author, title)
+		}
+	case 2:
+		s0 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_avail WHERE title = '%s' and author = '%s' and ISBN = '%s'", title, author, ISBN)
+		s1 = fmt.Sprintf("SELECT book_id, title, author, ISBN FROM books_borrow WHERE title = '%s' and author = '%s' and ISBN = '%s'", title, author, ISBN)
+	}
+
 	rows, err := lib.db.Query(s0)
 	if err != nil {
 		fmt.Println(s0)
@@ -292,12 +347,26 @@ func (lib *Library) ReturnBook(book_id int) error {
 }
 
 func (lib *Library) DeleteAll() error {
-	s0 := fmt.Sprintf("DROP TABLE remove_logs")
-	s1 := fmt.Sprintf("DROP TABLE borrow_logs")
-	s2 := fmt.Sprintf("DROP TABLE books_borrow")
-	s3 := fmt.Sprintf("DROP TABLE students")
-	s4 := fmt.Sprintf("DROP TABLE books")
-	err := Execute(lib.db, []string{s0, s1, s2, s3, s4})
+	s := fmt.Sprintf("DELETE FROM counts")
+	s0 := fmt.Sprintf("DELETE FROM remove_logs")
+	s1 := fmt.Sprintf("DELETE FROM borrow_logs")
+	s2 := fmt.Sprintf("DELETE FROM books_borrow")
+	s3 := fmt.Sprintf("DELETE FROM students")
+	s4 := fmt.Sprintf("DELETE FROM books_avail")
+	err := Execute(lib.db, []string{s, s0, s1, s2, s3, s4})
+	if err != nil {
+		panic(err)
+	}
+	s = fmt.Sprintf("DROP TABLE counts")
+	s0 = fmt.Sprintf("DROP TABLE remove_logs")
+	s1 = fmt.Sprintf("DROP TABLE borrow_logs")
+	s2 = fmt.Sprintf("DROP TABLE books_borrow")
+	s3 = fmt.Sprintf("DROP TABLE students")
+	s4 = fmt.Sprintf("DROP TABLE books_avail")
+	err = Execute(lib.db, []string{s, s0, s1, s2, s3, s4})
+	if err != nil {
+		panic(err)
+	}
 	lib.book_tot = 0
 	lib.student_tot = 0
 	return err
@@ -308,13 +377,14 @@ func main() {
 
 	lib := new(Library)
 	lib.ConnectDB()
-	lib.CreateTables()
-
 	fmt.Println("OK")
 	for {
 		op := ReadStr()
 		op = strings.ToLower(op)
 		switch op {
+		case "createtables":
+			lib.CreateTables()
+			fmt.Println("OK")
 		case "addbook":
 			inp := Board([]string{"title", "author", "ISBN"})
 			book_id, err := lib.AddBook(inp[0], inp[1], inp[2])
@@ -341,9 +411,17 @@ func main() {
 			}
 			fmt.Printf("%d OK\n", student_id)
 		case "findbook":
-			inp := Board([]string{"title", "author", "ISBN"})
-			ret, nor, err := lib.FindBook(inp[0], inp[1], inp[2])
+			inp := Board([]string{"title", "author", "ISBN", "Mod"})
+			mod, err := strconv.Atoi(inp[3])
 			if err != nil {
+				panic(err)
+			}
+			if mod >= 3 {
+				fmt.Println("InvalidMod")
+				return
+			}
+			ret, nor, er := lib.FindBook(inp[0], inp[1], inp[2], mod)
+			if er != nil {
 				panic(err)
 			}
 			fmt.Println("Returned: book_id | title | author | ISBN")
@@ -405,7 +483,7 @@ func main() {
 				fmt.Printf("[ %s ]\n", __)
 			}
 		case "extenddeadline":
-			inp := Board([]string{})
+			inp := Board([]string{"book_id", "deadline"})
 			book_id, err := strconv.Atoi(inp[0])
 			err = lib.ExtendDeadline(book_id, inp[1])
 			if err != nil {
@@ -420,7 +498,7 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("  book_id | title | author | ISBN  ")
+			fmt.Printf("  book_id | title | author | ISBN  \n")
 			for _, __ := range res {
 				fmt.Printf("[ %d | %s | %s | %s ]\n", __.book_id, __.title, __.author, __.ISBN)
 			}
