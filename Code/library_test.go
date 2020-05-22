@@ -6,7 +6,7 @@ import (
 
 func TestCreateTables(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	lib.DeleteAll()
 	err := lib.CreateTables()
 	if err != nil {
@@ -16,7 +16,7 @@ func TestCreateTables(t *testing.T) {
 
 func TestAddBook(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	lib.AddBook("Orz Lzh", "Lzh", "0") //1
 	lib.AddBook("Orz Lzh", "Lzh", "0") //2
 	lib.AddBook("Orz Lzh", "Lzh", "0") //3
@@ -37,13 +37,13 @@ func TestAddBook(t *testing.T) {
 
 func TestRemoveBook(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	lib.RemoveBook(13, "Fire")
 }
 
 func TestAddAccount(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	lib.AddAccount("Lzh", "1") //1
 	lib.AddAccount("XAs", "1") //2
 	lib.AddAccount("Pry", "1") //3
@@ -75,7 +75,7 @@ func CheckBook(ans, res []struct {
 
 func TestFindBook(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	ans0 := []struct {
 		book_id             int
 		title, author, ISBN string
@@ -89,7 +89,7 @@ func TestFindBook(t *testing.T) {
 		title, author, ISBN string
 	}{}
 
-	ret, nor, err := lib.FindBook("Orz Lzh", "Lzh", "0")
+	ret, nor, err := lib.FindBook("Orz Lzh", "Lzh", "0", 2)
 	if err != nil {
 		t.Errorf("Runtime Error")
 	}
@@ -103,7 +103,7 @@ func TestFindBook(t *testing.T) {
 
 func TestBorrowBook(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	err := lib.BorrowBook(1, 3, "2020-5-5")
 	if err != nil {
 		t.Errorf("Runtime Error")
@@ -138,7 +138,7 @@ func CheckStr(ans, res []string) bool {
 
 func TestBookNotReturned(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	res, err := lib.QueryBookNotReturned(3)
 	if err != nil {
 		t.Errorf("Runtime Error")
@@ -158,7 +158,7 @@ func TestBookNotReturned(t *testing.T) {
 
 func TestModifyDeadline(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	err := lib.ExtendDeadline(1, "2020-5-6")
 	if err != nil {
 		t.Errorf("Runtime Error")
@@ -179,7 +179,7 @@ func TestModifyDeadline(t *testing.T) {
 
 func TestQueryDeadline(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	res, err := lib.QueryDeadline(1)
 	if err != nil {
 		t.Errorf("Runtime Error")
@@ -192,7 +192,7 @@ func TestQueryDeadline(t *testing.T) {
 
 func TestReturnBook(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	err := lib.ReturnBook(3)
 	if err != nil {
 		t.Errorf("Runtime Error")
@@ -201,7 +201,7 @@ func TestReturnBook(t *testing.T) {
 
 func TestQueryOverdue(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	res, err := lib.QueryOverdue(3)
 	if err != nil {
 		t.Errorf("Runtime Error")
@@ -241,7 +241,7 @@ func CheckBorrow(ans, res []struct {
 
 func TestBorrorwHistory(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	res, err := lib.QueryHistory(3)
 	if err != nil {
 		t.Errorf("Runtime Error")
@@ -259,7 +259,7 @@ func TestBorrorwHistory(t *testing.T) {
 
 func TestBorrowAgain(t *testing.T) {
 	lib := Library{}
-	lib.ConnectDB()
+	lib.ConnectDBLocal()
 	err := lib.BorrowBook(5, 3, "2020-5-5")
 	if err != nil {
 		t.Errorf("Runtime Error")

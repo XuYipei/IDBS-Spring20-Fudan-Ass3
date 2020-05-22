@@ -13,17 +13,18 @@
 - books_borrow(book_id, title, author, ISBN, student_id, deadline, extend-_times)，主键为book_id，分别表示书本编号、书名、出版社名 、ISBN编码，学生编号，归还期限、延期次数，记录出借图书.
 - borrow_logs(book_id, student_id, ISBN)，主键为books_id，分别表示书本编号、学生账号、书本ISBN码，记录历史借阅信息.
 - remove_logs(book_id, ISBN, detail)，主键为book_id，分别表示书本编号、ISBN编码、备注，记录删去的书本
+- counts(book_count, student_count)，分别表示书本数量、学生数量，只有一个元组记录整个数据库的信息
 
 ## 功能及实现说明
 
 ### CreateTables
 
-​	创建上述模式  
+​	创建上述模式，并向counts中添加一个属性全为0的元组
 
 ### AddBook	title, author, ISBN
 
 ​	增加一本书本  
-​	向books_avail中添加新元组，系统会自动分配书本编号
+​	向books_avail中添加新元组，把counts中的元组book_count属性+1，以这个book_count来当作书本编号
 
 ### RemoveBook	book_id, detail
 
@@ -33,7 +34,7 @@
 ### AddAccount	name, password
 
 ​	添加一个学生账户  
-​	向students中添加相关元组，系统会自动分配学生的账号名 
+​	向students中添加相关元组，把counts中的元组student_count属性+1，以这个student_count来当作书本编号
 
 ### FindBook	title, author, ISBN
 
@@ -88,7 +89,9 @@
 ​	运行示例：  
 ​	![1](D:\DataBase\IDBS-Spring20-Fudan-Ass3\Report\1.jpg)
 
-## Test文件
+​	详细使用说明请见项目链接Code文件夹中的instruction.pdf
+
+##  Test文件
 
 ​	文件为library_test.go，使用命令go test -v进行测试
 

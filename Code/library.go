@@ -20,9 +20,9 @@ const (
 )
 
 type Library struct {
-	db                                *sqlx.DB
 	User, Password, DBName            string
 	book_tot, student_tot, remove_tot int
+	db                                *sqlx.DB
 }
 type BOOK struct {
 	book_id             int
@@ -59,6 +59,18 @@ func (lib *Library) ConnectDB() {
 	lib.User = inp[0]
 	lib.Password = inp[1]
 	lib.DBName = inp[2]
+	db, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", lib.User, lib.Password, lib.DBName))
+	if err != nil {
+		panic(err)
+	}
+	lib.db = db
+	//	defer db.Close()
+}
+
+func (lib *Library) ConnectDBLocal() {
+	lib.User = "XuYipei"
+	lib.Password = "123456"
+	lib.DBName = "ass3"
 	db, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", lib.User, lib.Password, lib.DBName))
 	if err != nil {
 		panic(err)
